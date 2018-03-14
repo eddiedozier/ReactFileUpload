@@ -1,0 +1,1 @@
+## To Run this project locally simply download and perform npm-install to restore packages.
