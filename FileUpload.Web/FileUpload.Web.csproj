@@ -22,6 +22,10 @@
 
   <ItemGroup>
     <Folder Include="Controllers\Api\" />
+    <Folder Include="wwwroot\dist\" />
+    <Folder Include="wwwroot\dist\css\" />
+    <Folder Include="wwwroot\dist\fonts\" />
+    <Folder Include="wwwroot\dist\iconfont\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FileUpload.Models\FileUpload.Models.csproj" />

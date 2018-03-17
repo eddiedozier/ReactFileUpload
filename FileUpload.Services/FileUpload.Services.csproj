@@ -11,8 +11,15 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="2.0.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.0.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="2.0.1" />
+    <PackageReference Include="AWSSDK.Core" Version="3.3.21.15" />
+    <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="3.3.4" />
+    <PackageReference Include="AWSSDK.S3" Version="3.3.17.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\FileUpload.Models\FileUpload.Models.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Interfaces\" />
+    <Folder Include="Security\" />
   </ItemGroup>
 </Project>
