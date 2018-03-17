@@ -20,6 +20,7 @@ namespace FileUpload
         public static IWebHost BuildWebHost(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
                 .UseStartup<Startup>()
+                   //.UseUrls(urls: "http://localhost:6000")
                 .Build();
     }
 }
