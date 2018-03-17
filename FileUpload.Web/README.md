@@ -1,1 +1,2 @@
-## To Run this project locally simply download and perform npm-install to restore packages.
+## Installation Instructions
+To run this project locally simply download and run the yarn command in the terminal to restore packages.
