@@ -5,7 +5,7 @@ import PageHeader from '../components/utility/pageHeader';
 import Box from '../components/utility/box';
 import LayoutWrapper from '../components/utility/layoutWrapper';
 import ContentHolder from '../components/utility/contentHolder';
-import { Upload, Icon, Modal } from 'antd';
+import { Upload, Icon, Modal, Row, Col  } from 'antd';
 
 class FileUpload extends React.Component {
   state = {
@@ -38,19 +38,29 @@ class FileUpload extends React.Component {
         <PageHeader>File Upload</PageHeader>
         <Box>
           <ContentHolder>
-          <Upload
-            multiple={true}
-            action="//jsonplaceholder.typicode.com/posts/"
-            listType="picture-card"
-            fileList={fileList}
-            onPreview={this.handlePreview}
-            onChange={this.handleChange}
-          >
-            {fileList.length >= 5 ? null : uploadButton}
-          </Upload>
-          <Modal visible={previewVisible} footer={null} onCancel={this.handleCancel}>
-            <img alt="example" style={{ width: '100%' }} src={previewImage} />
-          </Modal>
+            <Row>
+              <Col span={12} offset={10}>
+                <h2>Upload Your Files</h2>
+              </Col>
+            </Row>
+            <Row>
+              <Col span={11} offset={7}>
+                <Upload
+                multiple={true}
+                action="//jsonplaceholder.typicode.com/posts/"
+                listType="picture-card"
+                fileList={fileList}
+                onPreview={this.handlePreview}
+                onChange={this.handleChange}
+                >
+                {fileList.length >= 5 ? null : uploadButton}
+                </Upload>
+                <Modal visible={previewVisible} footer={null} onCancel={this.handleCancel}>
+                  <img alt="example" style={{ width: '100%' }} src={previewImage} />
+                </Modal>
+              </Col>
+            </Row>
+            
           </ContentHolder>
         </Box>
       </LayoutWrapper>
