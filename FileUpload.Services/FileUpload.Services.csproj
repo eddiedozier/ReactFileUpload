@@ -14,12 +14,25 @@
     <PackageReference Include="AWSSDK.Core" Version="3.3.21.15" />
     <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="3.3.4" />
     <PackageReference Include="AWSSDK.S3" Version="3.3.17.1" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\FileUpload.Models\FileUpload.Models.csproj" />
+    <PackageReference Include="System.Security.Cryptography.Algorithms" Version="4.3.1" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="2.0.2" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Interfaces\" />
     <Folder Include="Security\" />
+    <Folder Include="Interfaces\Cryptography\" />
+    <Folder Include="Cryprography\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FileUpload.Data\FileUpload.Data.csproj" />
+    <ProjectReference Include="..\FileUpload.Models\FileUpload.Models.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="appsettings.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="appsettings.json">
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
   </ItemGroup>
 </Project>
