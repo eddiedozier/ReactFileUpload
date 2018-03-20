@@ -7,12 +7,29 @@ import LayoutWrapper from '../components/utility/layoutWrapper';
 import ContentHolder from '../components/utility/contentHolder';
 import { Upload, Icon, Modal, Row, Col  } from 'antd';
 
+import axios from 'axios';
+
 class FileUpload extends React.Component {
-  state = {
-    previewVisible: false,
-    previewImage: '',
-    fileList: [],
-  };
+      constructor(props){
+        super(props);
+        // this.state = {
+        //   previewVisible: false,
+        //   previewImage: '',
+        //   fileList: []
+        // };
+        this.state = {
+          files: [],
+          tags: [],
+          tagsInfo:[],
+          categories: [],
+          currentFileId: 0,
+          tagId: 0,
+          progress: 0,
+          done: false,
+          fileList: []
+      };
+        this.url = "api/file/";
+      }
 
   handleCancel = () => this.setState({ previewVisible: false })
 
@@ -24,6 +41,33 @@ class FileUpload extends React.Component {
   }
 
   handleChange = ({ fileList }) => this.setState({ fileList })
+
+  uploadfileHandler = (event) => {
+    console.log(event.target.files)
+    this.setState({done:true});
+    const files = event.target.files; 
+    const numOfFiles = event.target.files.length;
+    let partOfUpload = Math.round(100 / numOfFiles);
+    let progress = 0;
+    let config = {
+        onUploadProgress: () => {
+          this.setState({progress: progress});
+        }
+      };
+    for(let i = 0; i < files.length ; i++){
+        var formdata = new FormData();
+        
+        formdata.append("file", files[i]);
+        const uploadSuccess = (resp) => {
+            progress += partOfUpload;
+            this.setState({progress: progress});
+            this.setState({progress: 100});
+            
+        }
+        axios.post(this.url + "upload/", formdata, config)
+            .then(uploadSuccess, err => err);
+    }
+}
 
   render() {
     const { previewVisible, previewImage, fileList } = this.state;
@@ -44,6 +88,7 @@ class FileUpload extends React.Component {
               </Col>
             </Row>
             <Row>
+              <input type="file" name="file-2" id="file-2" onChange={this.uploadfileHandler} multiple />
               <Col span={11} offset={7}>
                 <Upload
                 multiple={true}

@@ -58,7 +58,6 @@ namespace FileUpload.Services
             );
         }
 
-
         public async Task<int> Insert(FileUploadAddRequest model)
         {
             int id = 0;
