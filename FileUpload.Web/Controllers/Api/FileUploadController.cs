@@ -18,7 +18,6 @@ using log4net;
 using FileUpload.Services.Interfaces;
 using System.Security.Principal;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Net.Http.Headers;
 
 namespace RockStarLab.Web.Controllers.Api
 {
@@ -26,13 +25,10 @@ namespace RockStarLab.Web.Controllers.Api
     public class FileUploadController : Controller
     {
         static IAmazonS3 client;
-        IPrincipal _principal;
-
-        FileUploadService fileService = new FileUploadService();
-
+        IFileUploadService _fileService;
         string serverFileName = string.Empty;
 
-        IFileUploadService _fileService;
+        FileUploadService fileService = new FileUploadService();
 
         [HttpPost("upload")]
         public async Task<IActionResult> UploadAsync(IFormFile file)
@@ -205,6 +201,7 @@ namespace RockStarLab.Web.Controllers.Api
 
         async Task<IActionResult> DeleteFile(UploadedFile uploadedFile)
         {
+
             using (client = new AmazonS3Client(Amazon.RegionEndpoint.USWest1))
             {
                 string bucketName = "ed-projects";
@@ -216,9 +213,7 @@ namespace RockStarLab.Web.Controllers.Api
 
                 try
                 {
-                    await client.DeleteAsync(deleteObjectRequest);
-
-                    client.DeleteObject(deleteObjectRequest);
+                    await client.DeleteObjectAsync(deleteObjectRequest);
                     return Ok("File Deleted");
                 }
                 catch (AmazonS3Exception s3Exception)
@@ -232,7 +227,6 @@ namespace RockStarLab.Web.Controllers.Api
         public FileUploadController(IFileUploadService FileService, IPrincipal principal)
         {
             _fileService = FileService;
-            _principal = principal;
         }
     }
 }

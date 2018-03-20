@@ -24,15 +24,15 @@
     <Folder Include="Cryprography\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\FileUpload.Data\FileUpload.Data.csproj" />
-    <ProjectReference Include="..\FileUpload.Models\FileUpload.Models.csproj" />
-  </ItemGroup>
-  <ItemGroup>
     <None Remove="appsettings.json" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="appsettings.json">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FileUpload.Models\FileUpload.Models.csproj" />
+    <ProjectReference Include="..\FileUpload.Data\FileUpload.Data.csproj" />
   </ItemGroup>
 </Project>
