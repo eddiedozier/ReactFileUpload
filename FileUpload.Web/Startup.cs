@@ -5,7 +5,6 @@ using FileUpload.Data.Interfaces;
 using FileUpload.Data.Providers;
 using FileUpload.Services;
 using FileUpload.Services.Interfaces;
-using FileUpload.Web.Core.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption;
