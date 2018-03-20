@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using Amazon.S3;
 using FileUpload.Data.Interfaces;
 using FileUpload.Data.Providers;
 using FileUpload.Services;
@@ -45,6 +46,7 @@ namespace FileUpload
                 })
                 .SetDefaultKeyLifetime(TimeSpan.FromDays(7));
             services.AddMvc();
+            services.AddAWSService<IAmazonS3>();
 
             // Registering Components
             services.AddTransient<IPeopleService, PeopleService>();

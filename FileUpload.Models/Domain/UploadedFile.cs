@@ -7,7 +7,6 @@ namespace FileUpload.Models.Domain
         public string FileName { get; set; }
         public int Size { get; set; }
         public string Description { get; set; }
-        public int CategoryId { get; set; }
         public string Type { get; set; }
         public string SystemFileName { get; set; }
         public DateTime CreatedDate { get; set; }

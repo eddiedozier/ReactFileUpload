@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Threading.Tasks;
+using FileUpload.Data.Extensions;
 using FileUpload.Models.Domain;
 using FileUpload.Models.Request;
 using FileUpload.Services.Interfaces;
@@ -53,7 +54,6 @@ namespace FileUpload.Services
                 {
                     paramCol.AddWithValue("@Id", model.Id);
                     paramCol.AddWithValue("@Description", model.Description);
-                    paramCol.AddWithValue("@CategoryId", model.CategoryId);
                 }
             );
         }
@@ -86,7 +86,7 @@ namespace FileUpload.Services
             return id;
         }
 
-        public UploadedFile Delete(int fileId, int accountId)
+        public UploadedFile Delete(int fileId)
         {
             UploadedFile uploadedFile = new UploadedFile();
             this.DataProvider.ExecuteCmd(
@@ -94,7 +94,6 @@ namespace FileUpload.Services
                 inputParamMapper: delegate (SqlParameterCollection paramCol)
                 {
                     paramCol.AddWithValue("@FileId", fileId);
-                    paramCol.AddWithValue("@AccountId", accountId);
                 },
                 singleRecordMapper: delegate (IDataReader reader, short set)
                 {
@@ -115,7 +114,6 @@ namespace FileUpload.Services
             file.Type = reader.GetSafeString(index++);
             file.SystemFileName = reader.GetSafeString(index++);
             file.Description = reader.GetSafeString(index++);
-            file.CategoryId = reader.GetSafeInt32(index++);
             file.CreatedDate = reader.GetSafeDateTime(index++);
             file.ModifiedDate = reader.GetSafeDateTime(index++);
             file.Modifiedby = reader.GetSafeString(index++);
