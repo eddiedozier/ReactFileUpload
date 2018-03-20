@@ -30,6 +30,11 @@ namespace RockStarLab.Web.Controllers.Api
 
         FileUploadService fileService = new FileUploadService();
 
+        [HttpGet("test")]
+        public IActionResult Get(){
+            return Ok("File ApI working");
+        }
+
         [HttpPost("upload")]
         public async Task<IActionResult> UploadAsync(IFormFile file)
         {
@@ -224,7 +229,7 @@ namespace RockStarLab.Web.Controllers.Api
             }
         }
 
-        public FileUploadController(IFileUploadService FileService, IPrincipal principal)
+        public FileUploadController(IFileUploadService FileService)
         {
             _fileService = FileService;
         }

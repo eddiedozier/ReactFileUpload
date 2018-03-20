@@ -49,6 +49,7 @@ namespace FileUpload
 
             // Registering Components
             services.AddTransient<IPeopleService, PeopleService>();
+            services.AddTransient<IFileUploadService, FileUploadService>();
 
             // Per Request
             services.AddTransient<IDataProvider>(s => new SqlDataProvider(connectionString));
