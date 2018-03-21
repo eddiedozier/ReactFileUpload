@@ -4,10 +4,11 @@ using Microsoft.Extensions.Configuration;
 using System.IO;
 using FileUpload.Models.Request;
 using FileUpload.Models.Domain;
+using FileUpload.Services.Interfaces;
 
 namespace FileUpload.Services
 {
-    public class PeopleService
+    public class PeopleService : IPeopleService
     {
         public IConfigurationRoot Configuration { get; }
         public string connectionString;

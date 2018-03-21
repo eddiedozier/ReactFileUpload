@@ -1,278 +1,226 @@
-﻿//using System;
-//using System.Collections.Generic;
-//using System.Linq;
-//using System.Threading.Tasks;
-//using Microsoft.AspNetCore.Mvc;
-//using FileUpload.Models.Response;
-//using FileUpload.Services;
-//using System.IO;
-//using System.Net;
-//using System.Net.Http;
-//using System.Web;
-//using FileUpload.Models.Request;
-//using FileUpload.Models.Domain;
-//using Amazon.S3;
-//using Amazon.S3.Transfer;
-//using Amazon.S3.Model;
-//using log4net;
-//using FileUpload.Services.Interfaces;
-//using System.Security.Principal;
-//using FileUpload.Services.Security;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using FileUpload.Models.Response;
+using FileUpload.Services;
+using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Web;
+using FileUpload.Models.Request;
+using FileUpload.Models.Domain;
+using Amazon.S3;
+using Amazon.S3.Transfer;
+using Amazon.S3.Model;
+using log4net;
+using FileUpload.Services.Interfaces;
+using System.Security.Principal;
+using Microsoft.AspNetCore.Http;
 
-//namespace RockStarLab.Web.Controllers.Api
-//{
-//    [Route("api/file")]
-//    public class FileUploadController : Controller
-//    {
-//        static IAmazonS3 client;
-//        private IConfigSettingsService _configServices;
-//        private IPrincipal _principal;
+namespace RockStarLab.Web.Controllers.Api
+{
+    [Route("api/file")]
+    public class FileUploadController : Controller
+    {
+        static IAmazonS3 client;
+        IFileUploadService _fileService;
+        string serverFileName = string.Empty;
 
-//        private static readonly ILog log = LogManager.GetLogger(typeof(FileUploadController));
-//        FileUploadService fileService = new FileUploadService();
+        FileUploadService fileService = new FileUploadService();
 
-//        string serverFileName = string.Empty;
 
-//        private IFileUploadService _fileService;
+        [HttpGet("test")]
+        public IActionResult Get(){
+            return Ok("File ApI working");
+        }
 
-//        [HttpPost("upload/{accountId}")]
-//        public async Task<HttpResponseMessage> UploadAsync(int accountId)
-//        {
-//            try
-//            {
-//                if (accountId == 0)
-//                {
-//                    accountId = _principal.Identity.GetCurrentUser().Id;
-//                }
+        [HttpPost("upload")]
+        public async Task<IActionResult> UploadAsync(IFormFile files)
+        {
+            try
+            {
+                ItemResponse<int> response = new ItemResponse<int>();
 
-//                ItemResponse<int> response = new ItemResponse<int>();
-//                System.Web.HttpPostedFile postedFile = HttpContext.Current.Request.Files[0];
-//                FileUploadAddRequest model = new FileUploadAddRequest
-//                {
-//                    FileName = postedFile.FileName,
-//                    Size = postedFile.ContentLength,
-//                    Type = postedFile.ContentType,
-//                    ModifiedBy = HttpContext.Current.User.Identity.IsAuthenticated ? HttpContext.Current.User.Identity.Name : "anonymous",
-//                    AccountId = accountId
-//                };
-//                string contentType = Request.Content.Headers.ContentType.MediaType;
+                FileUploadAddRequest model = new FileUploadAddRequest();
 
-//                serverFileName = string.Format("{0}_{1}{2}",
-//                    Path.GetFileNameWithoutExtension(postedFile.FileName),
-//                    Guid.NewGuid().ToString(),
-//                    Path.GetExtension(postedFile.FileName));
+                model.FileName = files.FileName;
+                model.Size = (int)files.Length;
+                model.Type = files.ContentType;
+                model.ModifiedBy = "anonymous";
 
-//                model.SystemFileName = serverFileName;
+                serverFileName = string.Format("{0}_{1}{2}",
+                    Path.GetFileNameWithoutExtension(files.FileName),
+                    Guid.NewGuid().ToString(),
+                    Path.GetExtension(files.FileName));
 
-//                // Saving File to AWS S3 Folder
-//                try
-//                {
-//                    TransferUtility fileTransferUtility = new TransferUtility(new AmazonS3Client(Amazon.RegionEndpoint.USWest2));
-//                    TransferUtilityUploadRequest request = new TransferUtilityUploadRequest();
+                model.SystemFileName = serverFileName;
 
-//                    string keyName = serverFileName;
-//                    string bucketName = _configServices.GetConfigValueByName("AWS:Bucket").ConfigValue;
+                // Saving File to AWS S3 Folder
+                try
+                {
+                    TransferUtility fileTransferUtility = new TransferUtility(new AmazonS3Client(Amazon.RegionEndpoint.USWest1));
+                    TransferUtilityUploadRequest request = new TransferUtilityUploadRequest();
 
-//                    request.BucketName = bucketName;
-//                    request.Key = keyName;
-//                    request.InputStream = postedFile.InputStream;
-//                    fileTransferUtility.Upload(request);
-//                }
-//                catch (Exception ex)
-//                {
-//                    log.Error("File Upload to AWS Failed!", ex);
-//                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, ex);
-//                }
+                    string keyName = serverFileName;
+                    string bucketName = "ed-projects";
 
-//                response.Item = await fileService.Insert(model);
+                    request.BucketName = bucketName;
+                    request.Key = keyName;
+                    request.InputStream = files.OpenReadStream();
+                    fileTransferUtility.Upload(request);
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(ex.Message);
+                }
 
-//                return Request.CreateResponse(HttpStatusCode.OK, response);
-//            }
-//            catch (Exception ex)
-//            {
-//                log.Error("Error Uploading File", ex);
-//                return Request.CreateErrorResponse(HttpStatusCode.BadRequest, ex);
-//            }
-//        }
+                response.Item = await fileService.Insert(model);
 
-//        [HttpGet("getall")]
-//        public HttpResponseMessage GetAll()
-//        {
-//            try
-//            {
-//                ItemsResponse<UploadedFile> response = new ItemsResponse<UploadedFile>();
-//                response.Items = fileService.GetAll();
-//                ResolveFilesUrl(response);
-//                return Request.CreateResponse(HttpStatusCode.OK, response);
-//            }
-//            catch (Exception ex)
-//            {
-//                log.Error("Error Getting All Files", ex);
-//                return Request.CreateResponse(HttpStatusCode.BadRequest, ex);
-//            }
-//        }
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
-//        [HttpGet("getall/{accountId}")]
-//        public HttpResponseMessage GetByAccountId(int accountId)
-//        {
-//            try
-//            {
-//                ItemsResponse<UploadedFile> response = new ItemsResponse<UploadedFile>();
-//                response.Items = fileService.GetByAccountId(accountId);
-//                ResolveFilesUrl(response);
-//                return Request.CreateResponse(HttpStatusCode.OK, response);
-//            }
-//            catch (Exception ex)
-//            {
-//                log.Error("Error Getting All Files", ex);
-//                return Request.CreateResponse(HttpStatusCode.BadRequest, ex);
-//            }
-//        }
+        [HttpGet("getall")]
+        public IActionResult GetAll()
+        {
+            try
+            {
+                ItemListResponse<UploadedFile> response = new ItemListResponse<UploadedFile>();
+                response.Items = fileService.GetAll();
+                ResolveFilesUrl(response);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
-//        [HttpPut("update")]
-//        public HttpResponseMessage Update(FileUploadUpdate model)
-//        {
-//            try
-//            {
-//                if (ModelState.IsValid)
-//                {
-//                    model.ModifiedBy = "a7295eb3-eaee-4093-90ca-e4586b170420";
-//                    _fileService.Update(model);
+        [HttpPut("update")]
+        public IActionResult Update(FileUploadUpdate model)
+        {
+            try
+            {
+                if (ModelState.IsValid)
+                {
+                    model.ModifiedBy = "a7295eb3-eaee-4093-90ca-e4586b170420";
+                    _fileService.Update(model);
 
-//                    SuccessResponse resp = new SuccessResponse();
+                    SuccessResponse resp = new SuccessResponse();
 
-//                    return Request.CreateResponse(HttpStatusCode.OK, resp);
-//                }
-//                else
-//                {
-//                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, ModelState);
-//                }
-//            }
-//            catch (Exception ex)
-//            {
-//                log.Error("Error Updating File", ex);
-//                return Request.CreateResponse(HttpStatusCode.BadRequest, ex);
-//            }
-//        }
+                    return Ok(resp);
+                }
+                else
+                {
+                    return BadRequest(ModelState);
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
-//        [HttpPut("update/profileimg")]
-//        public HttpResponseMessage UpdateProfilePhoto(ProfilePhotoUpdate model)
-//        {
-//            try
-//            {
-//                if (ModelState.IsValid)
-//                {
+        [HttpGet("{id}")]
+        public IActionResult GetById(int id)
+        {
+            try
+            {
+                ItemResponse<UploadedFile> response = new ItemResponse<UploadedFile>();
+                response.Item = fileService.GetById(id);
+                ResolveFileUrl(response);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
-//                    _fileService.UpdateProfilePhoto(model);
+        IActionResult ResolveFilesUrl(ItemListResponse<UploadedFile> response)
+        {
+            try
+            {
+                string serverPath = "https://s3-us-west-1.amazonaws.com/ed-projects/";
+                foreach (UploadedFile file in response.Items)
+                {
+                    string filePath = Path.Combine(serverPath, file.SystemFileName);
+                    file.SystemFileName = filePath;
+                }
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
-//                    SuccessResponse resp = new SuccessResponse();
+        IActionResult ResolveFileUrl(ItemResponse<UploadedFile> response)
+        {
+            try
+            {
+                string serverPath = "https://s3-us-west-1.amazonaws.com/ed-projects/";
+                string filePath = Path.Combine(serverPath, response.Item.SystemFileName);
+                response.Item.SystemFileName = filePath;
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
 
-//                    return Request.CreateResponse(HttpStatusCode.OK, resp);
-//                }
-//                else
-//                {
-//                    return Request.CreateErrorResponse(HttpStatusCode.BadRequest, ModelState);
-//                }
-//            }
-//            catch (Exception ex)
-//            {
-//                log.Error("Error Updating User Profile Photo", ex);
-//                return Request.CreateResponse(HttpStatusCode.BadRequest, ex);
-//            }
-//        }
+            }
+        }
 
-//        [HttpGet("{id}")]
-//        public HttpResponseMessage GetById(int id)
-//        {
-//            try
-//            {
-//                ItemResponse<UploadedFile> response = new ItemResponse<UploadedFile>();
-//                response.Item = fileService.GetById(id);
-//                ResolveFileUrl(response);
-//                return Request.CreateResponse(HttpStatusCode.OK, response);
-//            }
-//            catch (Exception ex)
-//            {
-//                log.Error("Error Getting File", ex);
-//                return Request.CreateResponse(HttpStatusCode.BadRequest, ex);
-//            }
-//        }
+        [HttpDelete("delete/{fileId}")]
+        public async Task<IActionResult> Delete(int fileId)
+        {
+            try
+            {
+                ItemResponse<UploadedFile> response = new ItemResponse<UploadedFile>();
+                response.Item = fileService.Delete(fileId);
+                await DeleteFile(response.Item);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
-//        private void ResolveFilesUrl(ItemsResponse<UploadedFile> response)
-//        {
-//            try
-//            {
-//                string serverPath = _configServices.GetConfigValueByName("AWS:BaseURL").ConfigValue;
-//                foreach (UploadedFile file in response.Items)
-//                {
-//                    string filePath = Path.Combine(serverPath, file.SystemFileName);
-//                    file.SystemFileName = filePath;
-//                }
-//            }
-//            catch (Exception ex)
-//            {
-//                log.Error("Error Returning File Path on AWS", ex);
-//            }
-//        }
+        async Task<IActionResult> DeleteFile(UploadedFile uploadedFile)
+        {
 
-//        private void ResolveFileUrl(ItemResponse<UploadedFile> response)
-//        {
-//            try
-//            {
-//                string serverPath = _configServices.GetConfigValueByName("AWS:BaseURL").ConfigValue;
-//                string filePath = Path.Combine(serverPath, response.Item.SystemFileName);
-//                response.Item.SystemFileName = filePath;
-//            }
-//            catch (Exception ex)
-//            {
-//                log.Error("Error Returning File Path on AWS", ex);
-//            }
-//        }
+            using (client = new AmazonS3Client(Amazon.RegionEndpoint.USWest1))
+            {
+                string bucketName = "ed-projects";
+                Amazon.S3.Model.DeleteObjectRequest deleteObjectRequest = new Amazon.S3.Model.DeleteObjectRequest
+                {
+                    BucketName = bucketName,
+                    Key = uploadedFile.SystemFileName
+                };
 
-//        [HttpDelete("delete/{fileId}/{accountId}")]
-//        public HttpResponseMessage Delete(int fileId, int accountId)
-//        {
-//            try
-//            {
-//                ItemResponse<UploadedFile> response = new ItemResponse<UploadedFile>();
-//                response.Item = fileService.Delete(fileId, accountId);
-//                DeleteFile(response.Item);
-//                return Request.CreateResponse(HttpStatusCode.OK, response);
-//            }
-//            catch (Exception ex)
-//            {
-//                log.Error("Error Deleting File", ex);
-//                return Request.CreateResponse(HttpStatusCode.BadRequest, ex);
-//            }
-//        }
+                try
+                {
+                    await client.DeleteObjectAsync(deleteObjectRequest);
+                    return Ok("File Deleted");
+                }
+                catch (AmazonS3Exception s3Exception)
+                {
+                    Console.WriteLine(s3Exception.Message, s3Exception.InnerException);
+                    return BadRequest(s3Exception);
+                }
+            }
+        }
 
-//        private void DeleteFile(UploadedFile uploadedFile)
-//        {
-//            using (client = new AmazonS3Client(Amazon.RegionEndpoint.USWest2))
-//            {
-//                string bucketName = _configServices.GetConfigValueByName("AWS:Bucket").ConfigValue;
-//                DeleteObjectRequest deleteObjectRequest = new DeleteObjectRequest
-//                {
-//                    BucketName = bucketName,
-//                    Key = uploadedFile.SystemFileName
-//                };
-//                try
-//                {
-//                    client.DeleteObject(deleteObjectRequest);
-//                }
-//                catch (AmazonS3Exception s3Exception)
-//                {
-//                    log.Error("Error Deleting File From AWS", s3Exception);
-//                    Console.WriteLine(s3Exception.Message, s3Exception.InnerException);
-//                }
-//            }
-//        }
-
-//        public FileUploadController(IConfigSettingsService service, IFileUploadService FileService, IPrincipal principal)
-//        {
-//            _configServices = service;
-//            _fileService = FileService;
-//            _principal = principal;
-//        }
-//    }
-//}
+        public FileUploadController(IFileUploadService FileService)
+        {
+            _fileService = FileService;
+        }
+    }
+}

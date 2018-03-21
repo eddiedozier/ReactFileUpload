@@ -13,6 +13,7 @@ namespace ProjectExample.UnitTest
         [TestMethod]
         public void Insert_Test()
         {
+            // Assign
             PeopleAddRequest model = new PeopleAddRequest
             {
                 FirstName = "Old",
@@ -22,9 +23,11 @@ namespace ProjectExample.UnitTest
                 ModifiedBy = "me"
             };
 
+            // Act
             PeopleService svc = new PeopleService();
             int result = svc.Insert(model);
 
+            // Assert
             Assert.IsTrue(result > 0, "The insert failed!");
         }
 
