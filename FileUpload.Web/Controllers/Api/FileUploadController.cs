@@ -30,41 +30,30 @@ namespace RockStarLab.Web.Controllers.Api
 
         FileUploadService fileService = new FileUploadService();
 
+
         [HttpGet("test")]
         public IActionResult Get(){
             return Ok("File ApI working");
         }
 
         [HttpPost("upload")]
-        public async Task<IActionResult> UploadAsync(IFormFile file)
+        public async Task<IActionResult> UploadAsync(IFormFile files)
         {
             try
             {
                 ItemResponse<int> response = new ItemResponse<int>();
 
-                //FileDetails fileDetails;
-                //using (var reader = new StreamReader(file.OpenReadStream()))
-                //{
-                //    var fileContent = reader.ReadToEnd();
-                //    var parsedContentDisposition = ContentDispositionHeaderValue.Parse(file.ContentDisposition);
-                //    var fileName = parsedContentDisposition.FileName;
-                   
-                //}
+                FileUploadAddRequest model = new FileUploadAddRequest();
 
-                FileUploadAddRequest model = new FileUploadAddRequest
-                {
-                    FileName = file.FileName,
-                    Size = (int)file.Length,
-                    Type = file.ContentType,
-                    ModifiedBy = "anonymous"
-                };
-
-                //System.Web.HttpPostedFile postedFile = HttpContext.Current.Request.Files[0];
+                model.FileName = files.FileName;
+                model.Size = (int)files.Length;
+                model.Type = files.ContentType;
+                model.ModifiedBy = "anonymous";
 
                 serverFileName = string.Format("{0}_{1}{2}",
-                    Path.GetFileNameWithoutExtension(file.FileName),
+                    Path.GetFileNameWithoutExtension(files.FileName),
                     Guid.NewGuid().ToString(),
-                    Path.GetExtension(file.FileName));
+                    Path.GetExtension(files.FileName));
 
                 model.SystemFileName = serverFileName;
 
@@ -79,7 +68,7 @@ namespace RockStarLab.Web.Controllers.Api
 
                     request.BucketName = bucketName;
                     request.Key = keyName;
-                    request.InputStream = file.OpenReadStream();
+                    request.InputStream = files.OpenReadStream();
                     fileTransferUtility.Upload(request);
                 }
                 catch (Exception ex)

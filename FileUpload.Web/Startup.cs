@@ -36,6 +36,10 @@ namespace FileUpload
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            Environment.SetEnvironmentVariable("AWS_ACCESS_KEY_ID", "AKIAJVHD4YWMC32ZDQCQ");
+            Environment.SetEnvironmentVariable("AWS_SECRET_ACCESS_KEY", "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");
+            Environment.SetEnvironmentVariable("AWS_REGION", "us-west-1");
+            
             services.AddDataProtection()
                 .UseCryptographicAlgorithms(
                 new AuthenticatedEncryptorConfiguration()
