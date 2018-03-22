@@ -5,7 +5,7 @@ import PageHeader from '../components/utility/pageHeader';
 import Box from '../components/utility/box';
 import LayoutWrapper from '../components/utility/layoutWrapper';
 import ContentHolder from '../components/utility/contentHolder';
-import { Upload, Icon, message, Button, Card, Avatar, Row, Col  } from 'antd';
+import { Upload, Icon, message, Button, Card, Popconfirm, Avatar, Modal, Row, Col  } from 'antd';
 import axios from 'axios';
 
 const { Meta } = Card;
@@ -32,8 +32,10 @@ class FileUpload extends React.Component {
     fileList: [],
     uploading: false,
     previewVisible: false,
-    previewImage: '',
-    savedFiles: []
+    savedFiles: [],
+    imgLink: "",
+    showEditMode: false,
+    fileBeingEdited: {}
   }
 
   handleChange = ({ fileList }) => this.setState({ fileList })
@@ -57,31 +59,52 @@ class FileUpload extends React.Component {
       message.error('upload failed.');
     };
     axios.post(this.url + "upload", formData)
-      .then(uploadSuccess,uploadFail);
+      .then(uploadSuccess, uploadFail);
   }
+
+  handleSave = () => {
+    console.log("Saving Changes");
+  }
+
+  deleteFile = (fileId) => {
+    axios.delete(this.url + `delete/${fileId}`)
+      .then(resp => {
+        this.setState({savedFiles: this.state.savedFiles.filter((file) => fileId !== file.id)})
+        message.success(resp.data.item.fileName + " " + "deleted!")
+      });
+
+  }
+
+  handleCancel = () => this.setState({ previewVisible: false })
+
+  cancelEditMode = () => this.setState({ showEditMode: false })
+  
+  handleEdit = (fileId) => {
+    this.state.savedFiles.forEach(file => {
+      if(file.id === fileId){
+        this.setState({fileBeingEdited: this.state.savedFiles.find(item => item.id === fileId)})
+      }
+    })
+    this.setState({ showEditMode: true })
+  }
+  expandImg = (src) => this.setState({previewVisible: true, imgLink: src}) 
 
   componentWillReceiveProps = () =>{
     axios.get(this.url + "getall")
       .then(resp => {
-        console.log(resp.data.items)
         resp.data.items.forEach(file => {
             this.setState({savedFiles: [...this.state.savedFiles, { id: file.id, name: file.fileName, link: file.systemFileName, description: file.description }]});
         })
       })
   }
 
-  componentDidMount = () => {
-    this.componentWillReceiveProps();
-    
-  }
+  componentDidMount = () => this.componentWillReceiveProps();
 
   render() {
     console.log(this.state.savedFiles)
-    
     const { uploading, fileList} = this.state;
     const props = {
       action: this.url + "upload",
-      onPreview:this.handlePreview,
       onChange:this.handleChange,
       onRemove: (file) => {
         this.setState(({ fileList }) => {
@@ -102,14 +125,19 @@ class FileUpload extends React.Component {
       fileList: this.state.fileList,
       name: "files"
     };
-    let num = 4;
     let files = this.state.savedFiles.map(file => {
       return (
-            <Col span={8}>
+            <Col span={8} key={file.id}>
               <Card
                 style={{ width: 350 , marginBottom: "35px"}}
                 cover={<img alt="image" src={file.link} height="200"/>}
-                actions={[<Icon type="edit" />, <Icon type="delete" />]}>
+                actions={[
+                <Icon type="edit" title="edit" onClick={() => this.handleEdit(file.id)}/>, 
+                <Icon type="arrows-alt" title="expand" onClick={() => this.expandImg(file.link)}/>,
+                <Popconfirm title={`Are you sure you want to delete ${file.name}?`} onConfirm={() => this.deleteFile(file.id)} okText="Yes" cancelText="No">
+                  <Icon type="delete" title="delete"/>
+                </Popconfirm>
+                  ]}>
                 <Meta
                   title={file.name}
                   description={file.description}/>
@@ -138,6 +166,12 @@ class FileUpload extends React.Component {
                     <Icon type="upload" /> Select File
                   </Button>
                 </Upload>
+                <Modal visible={this.state.previewVisible} footer={null} onCancel={this.handleCancel}>
+                    <img alt="example" style={{ width: '100%' }} src={this.state.imgLink} />
+                </Modal>
+                <Modal visible={this.state.showEditMode} onCancel={this.cancelEditMode} okText="Save" onOk={this.handleSave}>
+                  <p>Edit - <strong>{this.state.fileBeingEdited.name}</strong></p>
+                </Modal>
                 <Button
                   style={{marginBottom: "50px"}}
                   type="primary"

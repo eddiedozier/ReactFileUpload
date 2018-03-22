@@ -10,10 +10,7 @@ namespace FileUpload.Models.Request
 
         [Required]
         public string Description { get; set; }
-
-        [Range(1, 1000000000, ErrorMessage = "Category Id out of Range")]
-        public int CategoryId { get; set; }
-
+    
         public string ModifiedBy { get; set; }
     }
 }
