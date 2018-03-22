@@ -5,20 +5,21 @@ import PageHeader from '../components/utility/pageHeader';
 import Box from '../components/utility/box';
 import LayoutWrapper from '../components/utility/layoutWrapper';
 import ContentHolder from '../components/utility/contentHolder';
-import { Upload, Icon, message, Button, Row, Col  } from 'antd';
-
+import { Upload, Icon, message, Button, Card, Avatar, Row, Col  } from 'antd';
 import axios from 'axios';
 
+const { Meta } = Card;
+
 function beforeUpload(file) {
-  // const isJPG = file.type === 'image/jpeg';
-  // if (!isJPG) {
-  //   message.error('You can only upload JPG file!');
-  // }
+  const isJPG = file.type === 'image/jpeg';
+  if (!isJPG) {
+    message.error('You can only upload JPG file!');
+  }
   const isLt2M = file.size / 1024 / 1024 < 5;
   if (!isLt2M) {
     message.error('Image must smaller than 5MB!');
   }
-  return isLt2M;
+  return isJPG && isLt2M;
 }
 
 class FileUpload extends React.Component {
@@ -29,8 +30,13 @@ class FileUpload extends React.Component {
 
   state = {
     fileList: [],
-    uploading: false
+    uploading: false,
+    previewVisible: false,
+    previewImage: '',
+    savedFiles: []
   }
+
+  handleChange = ({ fileList }) => this.setState({ fileList })
 
   handleUpload = () => {
     const { fileList } = this.state;
@@ -44,22 +50,39 @@ class FileUpload extends React.Component {
     });
   
     const uploadSuccess = (resp) => {
-      console.log(resp)
-      console.log("fileuploadewd!!!")
-      this.setState({uploading: false});
+      this.setState({uploading: false, fileList: []});
+      message.success('upload successfully.');
     };
     const uploadFail = (resp) => {
-      console.log(resp);
+      message.error('upload failed.');
     };
-    console.log("TEst")
     axios.post(this.url + "upload", formData)
       .then(uploadSuccess,uploadFail);
   }
 
+  componentWillReceiveProps = () =>{
+    axios.get(this.url + "getall")
+      .then(resp => {
+        console.log(resp.data.items)
+        resp.data.items.forEach(file => {
+            this.setState({savedFiles: [...this.state.savedFiles, { id: file.id, name: file.fileName, link: file.systemFileName, description: file.description }]});
+        })
+      })
+  }
+
+  componentDidMount = () => {
+    this.componentWillReceiveProps();
+    
+  }
+
   render() {
-    const { uploading } = this.state;
+    console.log(this.state.savedFiles)
+    
+    const { uploading, fileList} = this.state;
     const props = {
       action: this.url + "upload",
+      onPreview:this.handlePreview,
+      onChange:this.handleChange,
       onRemove: (file) => {
         this.setState(({ fileList }) => {
           const index = fileList.indexOf(file);
@@ -79,6 +102,24 @@ class FileUpload extends React.Component {
       fileList: this.state.fileList,
       name: "files"
     };
+    let num = 4;
+    let files = this.state.savedFiles.map(file => {
+      return (
+            <Col span={8}>
+              <Card
+                style={{ width: 350 , marginBottom: "35px"}}
+                cover={<img alt="image" src={file.link} height="200"/>}
+                actions={[<Icon type="edit" />, <Icon type="delete" />]}>
+                <Meta
+                  title={file.name}
+                  description={file.description}/>
+              </Card>
+            </Col>
+      )
+      
+    }
+        
+      )
     return (
       <LayoutWrapper>
         <PageHeader>File Upload</PageHeader>
@@ -92,13 +133,13 @@ class FileUpload extends React.Component {
             <Row>
               <Col span={11} offset={7}>
               <div>
-                <Upload {...props} beforeUpload={beforeUpload}>
+                <Upload {...props}>
                   <Button>
                     <Icon type="upload" /> Select File
                   </Button>
                 </Upload>
                 <Button
-                  className="upload-demo-start"
+                  style={{marginBottom: "50px"}}
                   type="primary"
                   onClick={this.handleUpload}
                   disabled={this.state.fileList.length === 0}
@@ -109,6 +150,11 @@ class FileUpload extends React.Component {
               </Col>
             </Row>
             
+            <div className="gutter-example">
+              <Row span={8}>
+                {files}
+              </Row>
+            </div>
           </ContentHolder>
         </Box>
       </LayoutWrapper>
