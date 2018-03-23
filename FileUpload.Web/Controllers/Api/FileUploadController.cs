@@ -97,7 +97,7 @@ namespace RockStarLab.Web.Controllers.Api
         }
 
         [HttpPut("update")]
-        public IActionResult Update(FileUploadUpdate model)
+        public IActionResult Update([FromBody] FileUploadUpdate model)
         {
             try
             {

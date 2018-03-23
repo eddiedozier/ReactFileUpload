@@ -5,7 +5,7 @@ import PageHeader from '../components/utility/pageHeader';
 import Box from '../components/utility/box';
 import LayoutWrapper from '../components/utility/layoutWrapper';
 import ContentHolder from '../components/utility/contentHolder';
-import { Upload, Icon, message, Button, Card, Popconfirm, Avatar, Modal, Row, Col  } from 'antd';
+import { Upload, Icon, message, Button, Card, Popconfirm, Avatar, Input, Modal, Row, Col  } from 'antd';
 import axios from 'axios';
 
 const { Meta } = Card;
@@ -35,10 +35,19 @@ class FileUpload extends React.Component {
     savedFiles: [],
     imgLink: "",
     showEditMode: false,
-    fileBeingEdited: {}
+    fileBeingEdited: {},
+    loading: false
   }
 
   handleChange = ({ fileList }) => this.setState({ fileList })
+
+  handleCancel = () => this.setState({ previewVisible: false })
+
+  cancelEditMode = () => this.setState({ showEditMode: false })
+  
+  expandImg = (src) => this.setState({previewVisible: true, imgLink: src}) 
+
+  componentDidMount = () => this.componentWillReceiveProps()
 
   handleUpload = () => {
     const { fileList } = this.state;
@@ -54,6 +63,16 @@ class FileUpload extends React.Component {
     const uploadSuccess = (resp) => {
       this.setState({uploading: false, fileList: []});
       message.success('upload successfully.');
+      const newFileId = resp.data.item;
+      axios.get(this.url + newFileId)
+        .then(resp => {
+          this.setState({savedFiles: [...this.state.savedFiles, { 
+            id: resp.data.item.id, 
+            name: resp.data.item.fileName, 
+            link: resp.data.item.systemFileName, 
+            description: resp.data.item.description 
+          }]});
+        })
     };
     const uploadFail = (resp) => {
       message.error('upload failed.');
@@ -62,8 +81,25 @@ class FileUpload extends React.Component {
       .then(uploadSuccess, uploadFail);
   }
 
-  handleSave = () => {
-    console.log("Saving Changes");
+  handleSave = (fileId) => {
+    this.setState({ loading: true });
+    const updatedFile = {
+      Id: this.state.fileBeingEdited.id, 
+      Description: this.state.fileBeingEdited.description
+    };
+    axios.put(this.url + "update", updatedFile)
+      .then(() => {
+        setTimeout(() => {
+          this.setState({ loading: false, showEditMode: false});
+          
+        }, 500);
+        const newFiles = this.state.savedFiles.map(file => {
+            if(file.id === fileId){
+              file.description = this.state.fileBeingEdited.description;
+            }
+          return file;
+        })
+      })
   }
 
   deleteFile = (fileId) => {
@@ -72,36 +108,40 @@ class FileUpload extends React.Component {
         this.setState({savedFiles: this.state.savedFiles.filter((file) => fileId !== file.id)})
         message.success(resp.data.item.fileName + " " + "deleted!")
       });
-
   }
-
-  handleCancel = () => this.setState({ previewVisible: false })
-
-  cancelEditMode = () => this.setState({ showEditMode: false })
   
   handleEdit = (fileId) => {
-    this.state.savedFiles.forEach(file => {
-      if(file.id === fileId){
-        this.setState({fileBeingEdited: this.state.savedFiles.find(item => item.id === fileId)})
-      }
-    })
+    axios.get(this.url + fileId)
+      .then(resp => {
+        this.setState({fileBeingEdited: { 
+          id: resp.data.item.id, 
+          name: resp.data.item.fileName, 
+          link: resp.data.item.systemFileName, 
+          description: resp.data.item.description 
+        }})
+        
+      })
     this.setState({ showEditMode: true })
   }
-  expandImg = (src) => this.setState({previewVisible: true, imgLink: src}) 
 
+  onChangeDescription = (input) => {
+    this.setState({fileBeingEdited: {...this.state.fileBeingEdited , description: input.target.value }})
+  }
   componentWillReceiveProps = () =>{
     axios.get(this.url + "getall")
       .then(resp => {
         resp.data.items.forEach(file => {
-            this.setState({savedFiles: [...this.state.savedFiles, { id: file.id, name: file.fileName, link: file.systemFileName, description: file.description }]});
+            this.setState({savedFiles: [...this.state.savedFiles, { 
+              id: file.id, 
+              name: file.fileName, 
+              link: file.systemFileName, 
+              description: file.description 
+            }]});
         })
       })
   }
 
-  componentDidMount = () => this.componentWillReceiveProps();
-
   render() {
-    console.log(this.state.savedFiles)
     const { uploading, fileList} = this.state;
     const props = {
       action: this.url + "upload",
@@ -169,8 +209,23 @@ class FileUpload extends React.Component {
                 <Modal visible={this.state.previewVisible} footer={null} onCancel={this.handleCancel}>
                     <img alt="example" style={{ width: '100%' }} src={this.state.imgLink} />
                 </Modal>
-                <Modal visible={this.state.showEditMode} onCancel={this.cancelEditMode} okText="Save" onOk={this.handleSave}>
+                <Modal 
+                  visible={this.state.showEditMode} 
+                  onCancel={this.cancelEditMode} 
+                  onOk={this.handleSave} 
+                  footer={[
+                    <Button key="back" onClick={this.cancelEditMode}>Cancel</Button>,
+                    <Button key="submit" type="primary" loading={this.state.loading} onClick={() => this.handleSave(this.state.fileBeingEdited.id)}>
+                      Save
+                    </Button>,
+                  ]}>
                   <p>Edit - <strong>{this.state.fileBeingEdited.name}</strong></p>
+                  <Input 
+                    id={this.state.fileBeingEdited.id}
+                    placeholder="Description"
+                    value={this.state.fileBeingEdited.description}
+                    onChange={this.onChangeDescription}
+                    />
                 </Modal>
                 <Button
                   style={{marginBottom: "50px"}}
@@ -183,7 +238,6 @@ class FileUpload extends React.Component {
               </div>
               </Col>
             </Row>
-            
             <div className="gutter-example">
               <Row span={8}>
                 {files}
